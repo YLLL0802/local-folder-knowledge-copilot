@@ -3,9 +3,11 @@ from pathlib import Path
 import streamlit as st
 
 from src.config import get_settings
+from src.generator import generate_grounded_answer
 from src.indexing import clear_index, index_folder
 from src.loaders import load_documents
 from src.permissions import ROLES
+from src.retriever import retrieve_chunks
 
 
 # Configure the Streamlit page before rendering any widgets.
@@ -37,6 +39,10 @@ with st.sidebar:
 
 # Show the selected demo role even before retrieval is implemented.
 st.caption(f"Current role: {user_role}")
+
+# Minimal Phase 3 query entry point before the full chat UI is built in Phase 4.
+question = st.text_input("Ask indexed documents")
+ask_clicked = st.button("Ask")
 
 # Clear index removes the configured Qdrant collection.
 if clear_clicked:
@@ -75,6 +81,39 @@ if reindex_clicked:
         }
     )
 
+# Ask runs Phase 3 retrieval and grounded answer generation.
+if ask_clicked:
+    try:
+        with st.spinner("Retrieving accessible sources..."):
+            chunks = retrieve_chunks(question, user_role, settings)
+            generated = generate_grounded_answer(question, chunks, settings)
+    except Exception as exc:
+        st.error(str(exc))
+        st.stop()
+
+    st.subheader("Answer")
+    st.write(generated.answer)
+    st.caption(
+        f"Status: {generated.answer_status} | "
+        f"LLM used: {'yes' if generated.used_llm else 'no'} | "
+        f"Filtered sources: {len(chunks)}"
+    )
+
+    with st.expander("Sources", expanded=bool(chunks)):
+        for chunk in chunks:
+            st.markdown(f"**{chunk.metadata.get('file_name', 'unknown')}**")
+            st.write(
+                {
+                    "relative_path": chunk.metadata.get("relative_path"),
+                    "score": round(chunk.score, 4),
+                    "department": chunk.metadata.get("department"),
+                    "sensitivity": chunk.metadata.get("sensitivity"),
+                    "allowed_roles": chunk.metadata.get("allowed_roles"),
+                    "chunk_index": chunk.metadata.get("chunk_index"),
+                }
+            )
+            st.caption(chunk.snippet)
+
 # Load preview only reads files and metadata; it does not embed or index.
 if load_clicked:
     try:
@@ -107,6 +146,6 @@ if load_clicked:
     with st.expander("Raw metadata"):
         for doc in documents:
             st.json(doc.metadata.model_dump(mode="json"))
-elif not reindex_clicked and not clear_clicked:
+elif not reindex_clicked and not clear_clicked and not ask_clicked:
     # Default empty state tells the user what can be done before indexing.
     st.info("Load the sample folder to preview documents and metadata before indexing.")

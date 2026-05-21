@@ -1,0 +1,12 @@
+.venv/
+.qdrant/
+.pytest_cache/
+.streamlit/
+__pycache__/
+*.pyc
+
+.env
+logs/*.jsonl
+!logs/.gitkeep
+data/
+docs/

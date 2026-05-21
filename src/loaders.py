@@ -138,7 +138,7 @@ def _read_docx(path: Path) -> str:
 def _main() -> None:
     """Run a small CLI preview for loaded documents and inferred metadata."""
 
-    parser = argparse.ArgumentParser(description="Preview loaded local OneDrive documents.")
+    parser = argparse.ArgumentParser(description="Preview loaded local folder documents.")
     parser.add_argument("--root", default="data/sample_docs", help="Folder to scan.")
     parser.add_argument("--limit", type=int, default=20, help="Maximum rows to print.")
     args = parser.parse_args()

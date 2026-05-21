@@ -360,12 +360,12 @@ def render_chat(user: AuthenticatedUser, settings: Settings) -> None:
         )
 
 
-st.set_page_config(page_title="Local OneDrive Knowledge Copilot", layout="wide")
+st.set_page_config(page_title="Local Folder Knowledge Copilot", layout="wide")
 
 settings = get_settings()
 init_session_state()
 
-st.title("Local OneDrive Knowledge Copilot")
+st.title("Local Folder Knowledge Copilot")
 
 user = current_user(settings)
 if not user:

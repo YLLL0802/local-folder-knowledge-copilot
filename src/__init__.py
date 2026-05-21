@@ -1,2 +1,1 @@
-"""Local OneDrive Knowledge Copilot package."""
-
+"""Local Folder Knowledge Copilot package."""

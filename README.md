@@ -1,12 +1,12 @@
-# Local OneDrive Knowledge Copilot
+# Local Folder Knowledge Copilot
 
-A local enterprise knowledge copilot prototype that simulates a SharePoint / OneDrive-based internal assistant with RAG, source citations, role-based retrieval filtering, and governance-aware guardrails.
+A local file-folder based knowledge copilot prototype with RAG, source citations, role-based retrieval filtering, administrator-managed users, and governance-aware guardrails.
 
 ## Why This Project
 
 This is not a production replacement for Microsoft Copilot Studio or Microsoft 365 Copilot. It is a local prototype for exploring enterprise RAG patterns:
 
-- Local folders map to SharePoint / OneDrive document libraries.
+- Local folders can map to SharePoint / OneDrive document libraries in an enterprise deployment.
 - Qdrant maps to Azure AI Search in an enterprise deployment.
 - Email-based role assignment maps to Entra ID group membership and SharePoint permission trimming.
 - JSONL audit logs will map to Purview-style auditability.
@@ -81,7 +81,7 @@ The administrator assigns each demo email to an application role. The important 
 ## Setup
 
 ```bash
-cd local-onedrive-knowledge-copilot
+cd local-folder-knowledge-copilot
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -210,7 +210,7 @@ The `.env.example` file includes runtime settings for:
 
 ## RAG Pipeline
 
-1. Load documents from a local OneDrive-like folder.
+1. Load documents from a local folder.
 2. Extract metadata and default allowed roles.
 3. Chunk documents with LlamaIndex `SentenceSplitter` while preserving metadata.
 4. Embed chunks with LlamaIndex embedding integrations.

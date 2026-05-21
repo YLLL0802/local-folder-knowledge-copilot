@@ -2,12 +2,14 @@
 
 A local enterprise knowledge copilot prototype that simulates a SharePoint / OneDrive-based internal assistant with RAG, source citations, role-based retrieval filtering, and governance-aware guardrails.
 
-This repository is currently implemented through Phase 3:
+This repository is currently implemented through Phase 5:
 
 - Phase 0: project skeleton, configuration, sample documents, and README draft.
 - Phase 1: document loading, path exclusions, metadata extraction, default role mapping, and a loaded document preview.
 - Phase 2: document chunking, embedding generation, Qdrant local indexing, clear collection, and re-indexing.
 - Phase 3: permission-aware retrieval and grounded answer generation.
+- Phase 4: Streamlit chat UI, chat history, source expanders, and clear chat control.
+- Phase 5: prompt-injection warnings, sensitive-data warnings, JSONL audit logging, and audit preview.
 
 ## Why This Project
 
@@ -28,7 +30,11 @@ flowchart TD
     META --> INDEX["LlamaIndex ingestion pipeline"]
     INDEX --> QDRANT["Qdrant vector index"]
     QDRANT --> RET["Role-filtered retrieval"]
+    RET --> GUARD["Guardrails"]
     RET --> ANSWER["Grounded answer"]
+    GUARD --> ANSWER
+    ANSWER --> UI["Streamlit chat UI with sources"]
+    ANSWER --> AUDIT["JSONL audit log"]
 ```
 
 ## Implemented Features
@@ -47,6 +53,9 @@ flowchart TD
 - Retrieves chunks with a Qdrant metadata filter based on the selected user role.
 - Refuses when no accessible evidence is found.
 - Generates a grounded answer from retrieved sources, using an OpenAI-compatible LLM when configured or a local extractive fallback otherwise.
+- Provides a chat-style Streamlit interface with message history, per-answer status, and source expanders.
+- Displays prompt-injection and sensitive-data warnings for user queries and retrieved context.
+- Writes one JSONL audit event for each answer and shows recent audit events in the sidebar.
 
 ## Role-Based Retrieval Filtering
 
@@ -110,7 +119,7 @@ The default ingestion path uses LlamaIndex with:
 The default embedding model is:
 
 ```text
-sentence-transformers/all-MiniLM-L6-v2
+BAAI/bge-large-en-v1.5
 ```
 
 The first run may download the model if it is not already cached. In a no-network environment, set `EMBEDDING_MODEL` to a local Hugging Face model path.
@@ -123,7 +132,7 @@ Local Qdrant storage is written to:
 
 ## Ask Questions
 
-After indexing, use the Streamlit question box:
+After indexing, use the Streamlit chat input:
 
 ```text
 Ask indexed documents
@@ -141,6 +150,14 @@ LLM_PROVIDER=openai_compatible
 LLM_BASE_URL=
 LLM_API_KEY=
 LLM_MODEL=
+```
+
+Warnings appear below an assistant answer when guardrails detect prompt-injection phrases or basic sensitive-data patterns.
+
+Recent audit events appear in the sidebar under:
+
+```text
+Audit log preview
 ```
 
 ## Configuration
@@ -163,28 +180,24 @@ The `.env.example` file includes placeholders for later phases:
 6. Receive user query and selected role. Implemented in Phase 3.
 7. Retrieve chunks with role-based permission filtering. Implemented in Phase 3.
 8. Generate a grounded answer using retrieved context only. Implemented in Phase 3.
-9. Show citations and source snippets.
-10. Write audit records.
+9. Show citations and source snippets. Implemented in Phase 4.
+10. Write audit records. Implemented in Phase 5.
 
 ## Security and Governance Roadmap
 
-Later phases will add:
+Current guardrails include:
 
 - Prompt injection detection in user queries and retrieved context.
 - Sensitive data warnings for emails, phone numbers, tokens, secrets, and password-like content.
-- Refusal behavior when evidence is missing or permission-filtered documents are unavailable.
 - JSONL audit logging with role, query, warnings, source files, scores, and answer status.
 
 ## Limitations
 
 - No real Microsoft Graph, SharePoint, OneDrive, Entra ID, Teams, or Purview integration yet.
-- No audit logging yet.
-- Full chat-message UI is not implemented yet; Phase 3 uses a minimal question box.
 - Role selection is local and simulated.
 - Current permissions are inferred from folder names, not synced from real ACLs.
+- Guardrails are pattern-based and not a complete DLP or prompt-security system.
 
 ## Future Work
 
-- Phase 4: complete Streamlit chat UI with sources and warnings.
-- Phase 5: guardrails, audit logs, refusal behavior, and minimal tests.
 - Phase 6: architecture docs, security docs, demo script, and portfolio polish.

@@ -13,7 +13,7 @@ class Settings(BaseModel):
     llm_api_key: str = ""
     llm_model: str = ""
     embedding_provider: str = "sentence_transformers"
-    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_model: str = "BAAI/bge-large-en-v1.5"
     qdrant_url: str = ""
     qdrant_path: Path = Path(".qdrant")
     qdrant_collection: str = "local_onedrive_copilot"
@@ -43,9 +43,7 @@ def get_settings() -> Settings:
         llm_api_key=_getenv("LLM_API_KEY"),
         llm_model=_getenv("LLM_MODEL"),
         embedding_provider=_getenv("EMBEDDING_PROVIDER", "sentence_transformers"),
-        embedding_model=_getenv(
-            "EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
-        ),
+        embedding_model=_getenv("EMBEDDING_MODEL", "BAAI/bge-large-en-v1.5"),
         qdrant_url=_getenv("QDRANT_URL"),
         qdrant_path=Path(_getenv("QDRANT_PATH", ".qdrant")),
         qdrant_collection=_getenv("QDRANT_COLLECTION", "local_onedrive_copilot"),

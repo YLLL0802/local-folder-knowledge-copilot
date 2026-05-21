@@ -21,9 +21,11 @@ def generate_grounded_answer(
     query: str,
     chunks: list[RetrievedChunk],
     settings: Settings,
+    warnings: list[str] | None = None,
 ) -> GeneratedAnswer:
     """Generate an answer using retrieved chunks, refusing when evidence is missing."""
 
+    warnings = warnings or []
     if not chunks:
         return GeneratedAnswer(
             answer=(
@@ -36,7 +38,7 @@ def generate_grounded_answer(
         )
 
     if _llm_is_configured(settings):
-        answer = _call_openai_compatible_chat(query, chunks, settings)
+        answer = _call_openai_compatible_chat(query, chunks, settings, warnings)
         return GeneratedAnswer(answer=answer, answer_status="answered", used_llm=True)
 
     return GeneratedAnswer(
@@ -61,6 +63,7 @@ def _call_openai_compatible_chat(
     query: str,
     chunks: list[RetrievedChunk],
     settings: Settings,
+    warnings: list[str],
 ) -> str:
     """Call an OpenAI-compatible chat completion endpoint with grounded context."""
 
@@ -85,7 +88,11 @@ def _call_openai_compatible_chat(
             },
             {
                 "role": "user",
-                "content": f"Question:\n{query}\n\nContext:\n{_format_context(chunks)}",
+                "content": (
+                    f"Question:\n{query}\n\n"
+                    f"Guardrail warnings:\n{_format_warnings(warnings)}\n\n"
+                    f"Context:\n{_format_context(chunks)}"
+                ),
             },
         ],
         "temperature": 0.2,
@@ -122,3 +129,11 @@ def _format_context(chunks: list[RetrievedChunk]) -> str:
             f"{chunk.text}"
         )
     return "\n\n---\n\n".join(parts)
+
+
+def _format_warnings(warnings: list[str]) -> str:
+    """Format guardrail warnings for the LLM prompt."""
+
+    if not warnings:
+        return "none"
+    return "\n".join(f"- {warning}" for warning in warnings)

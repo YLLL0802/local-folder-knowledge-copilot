@@ -8,5 +8,7 @@ __pycache__/
 .env
 logs/*.jsonl
 !logs/.gitkeep
-data/
+data/*
+!data/sample_docs/
+!data/sample_docs/**
 docs/

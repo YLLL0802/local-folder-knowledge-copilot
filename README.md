@@ -105,6 +105,8 @@ streamlit run app.py
 
 Sign in with the configured default administrator, then use the sidebar to preview documents, manage users, and build the index.
 
+![Login screen](image/login.png)
+
 ## Preview Loaded Documents
 
 Use the CLI preview:
@@ -167,6 +169,8 @@ data/app_state/users.json
 
 This file is ignored by Git because it can contain local demo accounts.
 
+![Admin workspace](image/admin.png)
+
 ## Ask Questions
 
 After signing in and indexing, use the Streamlit chat input:
@@ -196,6 +200,8 @@ Recent audit events appear in the sidebar under:
 ```text
 Audit log preview
 ```
+
+![Chat answer with sources](image/chat.png)
 
 ## Configuration
 
@@ -255,4 +261,3 @@ Current controls include:
 - Replace local demo login with Entra ID / SSO.
 - Add automated evaluation for retrieval recall, groundedness, hallucination, and oversharing.
 - Add blocking policies for high-risk guardrail warnings.
-- Add screenshots or a short product demo video.

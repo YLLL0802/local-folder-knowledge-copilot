@@ -39,7 +39,7 @@ def index_folder(
     clear_existing: bool = False,
     max_file_size_mb: int = 10,
 ) -> IndexingResult:
-    """Run the Phase 2 pipeline with LlamaIndex chunking, embeddings, and Qdrant."""
+    """Load, split, embed, and index documents into Qdrant."""
 
     documents = load_documents(root_path, max_file_size_mb=max_file_size_mb)
     llama_documents = _to_llama_documents(documents)

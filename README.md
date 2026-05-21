@@ -2,22 +2,13 @@
 
 A local enterprise knowledge copilot prototype that simulates a SharePoint / OneDrive-based internal assistant with RAG, source citations, role-based retrieval filtering, and governance-aware guardrails.
 
-This repository is currently implemented through Phase 5:
-
-- Phase 0: project skeleton, configuration, sample documents, and README draft.
-- Phase 1: document loading, path exclusions, metadata extraction, default role mapping, and a loaded document preview.
-- Phase 2: document chunking, embedding generation, Qdrant local indexing, clear collection, and re-indexing.
-- Phase 3: permission-aware retrieval and grounded answer generation.
-- Phase 4: Streamlit chat UI, chat history, source expanders, and clear chat control.
-- Phase 5: prompt-injection warnings, sensitive-data warnings, JSONL audit logging, and audit preview.
-
 ## Why This Project
 
-This is not a production replacement for Microsoft Copilot Studio or Microsoft 365 Copilot. It is a local prototype designed to demonstrate enterprise AI architecture awareness:
+This is not a production replacement for Microsoft Copilot Studio or Microsoft 365 Copilot. It is a local prototype for exploring enterprise RAG patterns:
 
 - Local folders map to SharePoint / OneDrive document libraries.
-- Qdrant will map to Azure AI Search in later phases.
-- Metadata-based role filtering maps to Entra ID group membership and SharePoint permission trimming.
+- Qdrant maps to Azure AI Search in an enterprise deployment.
+- Email-based role assignment maps to Entra ID group membership and SharePoint permission trimming.
 - JSONL audit logs will map to Purview-style auditability.
 - Source-grounded answers and citations reduce hallucination risk.
 
@@ -25,11 +16,13 @@ This is not a production replacement for Microsoft Copilot Studio or Microsoft 3
 
 ```mermaid
 flowchart TD
+    LOGIN["Email login"] --> ROLE["Resolve user role"]
     DOCS["Local sample_docs folder"] --> LOAD["Document loader"]
     LOAD --> META["Metadata extraction"]
     META --> INDEX["LlamaIndex ingestion pipeline"]
     INDEX --> QDRANT["Qdrant vector index"]
-    QDRANT --> RET["Role-filtered retrieval"]
+    ROLE --> RET["Role-filtered retrieval"]
+    QDRANT --> RET
     RET --> GUARD["Guardrails"]
     RET --> ANSWER["Grounded answer"]
     GUARD --> ANSWER
@@ -50,16 +43,31 @@ flowchart TD
 - Uses LlamaIndex embedding and Qdrant integrations for production-like ingestion.
 - Stores vectors and payload metadata in a local Qdrant collection.
 - Supports clearing and rebuilding the index from the Streamlit sidebar or CLI.
-- Retrieves chunks with a Qdrant metadata filter based on the selected user role.
+- Provides a local email/password login flow for demo users.
+- Lets the default administrator add, update, and delete user email-to-role mappings.
+- Retrieves chunks with a Qdrant metadata filter based on the authenticated user's role.
 - Refuses when no accessible evidence is found.
 - Generates a grounded answer from retrieved sources, using an OpenAI-compatible LLM when configured or a local extractive fallback otherwise.
 - Provides a chat-style Streamlit interface with message history, per-answer status, and source expanders.
 - Displays prompt-injection and sensitive-data warnings for user queries and retrieved context.
 - Writes one JSONL audit event for each answer and shows recent audit events in the sidebar.
 
+## Enterprise Mapping
+
+| Prototype component | Enterprise equivalent |
+|---|---|
+| Streamlit app | Teams app, internal web app, or Copilot Studio agent front end |
+| Local folder | SharePoint or OneDrive document libraries |
+| Folder-derived metadata | SharePoint metadata, ACLs, and sensitivity labels |
+| Local email/password login | Entra ID authentication and group membership |
+| Local user store | Directory-backed role or group assignment |
+| Qdrant local vector index | Azure AI Search vector index with security trimming |
+| OpenAI-compatible chat API | Azure OpenAI chat deployment |
+| Local JSONL audit log | Purview, Azure Monitor, Application Insights, or SIEM telemetry |
+
 ## Role-Based Retrieval Filtering
 
-Phase 1 stores role metadata so Phase 2 and Phase 3 can apply permission filtering before generation.
+Documents store role metadata so retrieval can apply permission filtering before generation.
 
 | Folder | Default allowed roles |
 |---|---|
@@ -68,7 +76,7 @@ Phase 1 stores role metadata so Phase 2 and Phase 3 can apply permission filteri
 | `finance/` | `finance`, `admin` |
 | `hr/` | `hr`, `admin` |
 
-The important design principle is that restricted chunks must be filtered before they are passed to the LLM.
+The administrator assigns each demo email to an application role. The important design principle is that restricted chunks must be filtered before they are passed to the LLM.
 
 ## Setup
 
@@ -80,6 +88,23 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
+The default local administrator is configured in `.env`:
+
+```text
+ADMIN_EMAIL=admin@defaultemail.com
+ADMIN_PASSWORD=local-admin-password
+```
+
+This is a local demo login. In production, it should be replaced with Entra ID / SSO.
+
+## Run The App
+
+```bash
+streamlit run app.py
+```
+
+Sign in with the configured default administrator, then use the sidebar to preview documents, manage users, and build the index.
+
 ## Preview Loaded Documents
 
 Use the CLI preview:
@@ -88,17 +113,11 @@ Use the CLI preview:
 python -m src.loaders --root data/sample_docs
 ```
 
-Or run the Streamlit app:
-
-```bash
-streamlit run app.py
-```
-
-Then click `Load document preview`.
+Or sign in as an administrator and click `Load document preview`.
 
 ## Index Documents
 
-Use the Streamlit sidebar button:
+Use the administrator sidebar button:
 
 ```text
 Re-index documents
@@ -130,15 +149,33 @@ Local Qdrant storage is written to:
 .qdrant/
 ```
 
+## Manage Users
+
+The default administrator can create local demo users and assign one application role per email:
+
+- `general_staff`
+- `project_manager`
+- `finance`
+- `hr`
+- `admin`
+
+The local user store is written to:
+
+```text
+data/app_state/users.json
+```
+
+This file is ignored by Git because it can contain local demo accounts.
+
 ## Ask Questions
 
-After indexing, use the Streamlit chat input:
+After signing in and indexing, use the Streamlit chat input:
 
 ```text
 Ask indexed documents
 ```
 
-Retrieval applies the selected role before answer generation. For example:
+Retrieval applies the authenticated user's role before answer generation. For example:
 
 - `finance` and `admin` can retrieve `finance/` documents.
 - `general_staff` cannot retrieve `finance/`, `hr/`, or `projects/` documents.
@@ -162,30 +199,43 @@ Audit log preview
 
 ## Configuration
 
-The `.env.example` file includes placeholders for later phases:
+The `.env.example` file includes runtime settings for:
 
 - LLM provider and model settings.
 - Embedding provider and model settings.
 - Qdrant collection settings.
 - Local Qdrant path for embedded storage.
 - Chunking, retrieval, and audit log settings.
+- Default administrator and local user-store settings.
 
-## Planned RAG Pipeline
+## RAG Pipeline
 
 1. Load documents from a local OneDrive-like folder.
 2. Extract metadata and default allowed roles.
-3. Chunk documents with LlamaIndex `SentenceSplitter` while preserving metadata. Implemented in Phase 2.
-4. Embed chunks with LlamaIndex embedding integrations. Implemented in Phase 2.
-5. Store vectors and metadata in Qdrant through `QdrantVectorStore`. Implemented in Phase 2.
-6. Receive user query and selected role. Implemented in Phase 3.
-7. Retrieve chunks with role-based permission filtering. Implemented in Phase 3.
-8. Generate a grounded answer using retrieved context only. Implemented in Phase 3.
-9. Show citations and source snippets. Implemented in Phase 4.
-10. Write audit records. Implemented in Phase 5.
+3. Chunk documents with LlamaIndex `SentenceSplitter` while preserving metadata.
+4. Embed chunks with LlamaIndex embedding integrations.
+5. Store vectors and metadata in Qdrant through `QdrantVectorStore`.
+6. Receive user query and resolve the authenticated user's role.
+7. Retrieve chunks with role-based permission filtering.
+8. Generate a grounded answer using retrieved context only.
+9. Show citations and source snippets.
+10. Write audit records.
 
-## Security and Governance Roadmap
+## Example Questions
 
-Current guardrails include:
+After signing in and indexing `data/sample_docs`, try:
+
+| User role | Question | Expected behavior |
+|---|---|---|
+| `finance` | `When are non-PO invoices allowed?` | Retrieves finance chunks and answers from `vendor-payment-process.md`. |
+| `general_staff` | `When are non-PO invoices allowed?` | Does not retrieve finance chunks because of role filtering. |
+| `project_manager` | `What evidence is required before a project enters delivery?` | Retrieves project delivery evidence. |
+| `hr` | `What documentation may HR request for absences longer than three consecutive workdays?` | Retrieves HR leave policy evidence. |
+| `finance` | `What is suspicious about the vendor note?` | Retrieves the suspicious vendor note and shows prompt-injection warnings. |
+
+## Security And Governance
+
+Current controls include:
 
 - Prompt injection detection in user queries and retrieved context.
 - Sensitive data warnings for emails, phone numbers, tokens, secrets, and password-like content.
@@ -194,10 +244,15 @@ Current guardrails include:
 ## Limitations
 
 - No real Microsoft Graph, SharePoint, OneDrive, Entra ID, Teams, or Purview integration yet.
-- Role selection is local and simulated.
+- Login is local and simulated; it is not a production authentication system.
 - Current permissions are inferred from folder names, not synced from real ACLs.
 - Guardrails are pattern-based and not a complete DLP or prompt-security system.
 
 ## Future Work
 
-- Phase 6: architecture docs, security docs, demo script, and portfolio polish.
+- Add hybrid retrieval and reranking for acronyms, short queries, and exact policy terms.
+- Replace simulated folder permissions with real ACL sync.
+- Replace local demo login with Entra ID / SSO.
+- Add automated evaluation for retrieval recall, groundedness, hallucination, and oversharing.
+- Add blocking policies for high-risk guardrail warnings.
+- Add screenshots or a short product demo video.

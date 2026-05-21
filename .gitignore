@@ -5,10 +5,11 @@
 __pycache__/
 *.pyc
 
+docs/
+
 .env
 logs/*.jsonl
 !logs/.gitkeep
 data/*
 !data/sample_docs/
 !data/sample_docs/**
-docs/

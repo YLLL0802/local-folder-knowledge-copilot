@@ -31,7 +31,7 @@ def generate_grounded_answer(
             answer=(
                 "The available indexed documents do not contain enough accessible "
                 "evidence to answer this question. Re-index documents or check the "
-                "selected role's permissions."
+                "signed-in user's permissions."
             ),
             answer_status="no_evidence",
             used_llm=False,

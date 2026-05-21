@@ -22,6 +22,7 @@ def test_write_and_read_recent_audit_logs(tmp_path: Path) -> None:
 
     write_audit_log(
         settings=settings,
+        user_email="finance.user@defaultemail.com",
         user_role="finance",
         query="What is the vendor payment process?",
         answer_status="answered",
@@ -32,6 +33,7 @@ def test_write_and_read_recent_audit_logs(tmp_path: Path) -> None:
     records = read_recent_audit_logs(settings)
 
     assert len(records) == 1
+    assert records[0]["user_email"] == "finance.user@defaultemail.com"
     assert records[0]["user_role"] == "finance"
     assert records[0]["retrieved_source_count"] == 1
     assert records[0]["warnings"] == ["email_detected_in_context"]

@@ -16,6 +16,7 @@ def write_audit_log(
     answer_status: str,
     chunks: list[RetrievedChunk],
     warnings: list[str],
+    user_email: str | None = None,
 ) -> None:
     """Append one question-answer audit event to the JSONL audit log."""
 
@@ -23,6 +24,7 @@ def write_audit_log(
     log_path.parent.mkdir(parents=True, exist_ok=True)
     record = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "user_email": user_email,
         "user_role": user_role,
         "query": query,
         "answer_status": answer_status,

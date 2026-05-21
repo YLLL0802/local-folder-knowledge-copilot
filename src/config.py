@@ -22,6 +22,9 @@ class Settings(BaseModel):
     top_k: int = Field(default=5, gt=0)
     min_score: float = Field(default=0.25, ge=0.0)
     audit_log_path: Path = Path("logs/audit.jsonl")
+    admin_email: str = "admin@defaultemail.com"
+    admin_password: str = "local-admin-password"
+    user_store_path: Path = Path("data/app_state/users.json")
 
 
 def _getenv(name: str, default: str = "") -> str:
@@ -52,4 +55,7 @@ def get_settings() -> Settings:
         top_k=int(_getenv("TOP_K", "5")),
         min_score=float(_getenv("MIN_SCORE", "0.25")),
         audit_log_path=Path(_getenv("AUDIT_LOG_PATH", "logs/audit.jsonl")),
+        admin_email=_getenv("ADMIN_EMAIL", "admin@defaultemail.com"),
+        admin_password=_getenv("ADMIN_PASSWORD", "local-admin-password"),
+        user_store_path=Path(_getenv("USER_STORE_PATH", "data/app_state/users.json")),
     )
